@@ -1,25 +1,39 @@
 /* company list */
-.blue {background-color:blue; color:white;}
-.pink {background-color:#FF00CC; color:white;}
-.yellow {background-color:yellow; color:black;}
-.orange {background-color:orange; color:black;}
-.brown {background-color:#663300; color:white;}
-.green {background-color:green; color:white;}
-.purple {background-color:#660099; color:white;}
-.white {background-color:white; color:black;}
-.red {background-color:red; color:white;}
-.gray {background-color:gray; color:white;}
+.blue {background-color:blue;}
+.pink {background-color:#FF00CC;}
+.yellow {background-color:yellow;}
+.orange {background-color:orange;}
+.brown {background-color:#663300;}
+.green {background-color:green;}
+.purple {background-color:#660099;}
+.white {background-color:white;}
+.red {background-color:red;}
+.gray {background-color:gray;}
 
-
-.player-list p {
-  font-size: 18px;
-}
-
-.player-input-group {
-  margin-bottom: 20px;
+.header {
+  margin-top: 20px;
 }
 
 .log {
   max-height:400px;
   overflow-y: scroll;
+  margin-top: 30px;
+}
+
+.company-swatch {
+  width:20px;
+  height: 20px;
+  border: 1px solid black;
+  margin-right: 5px;
+  float: left;
+}
+
+.company-name {
+  margin-bottom: 15px;
+  height:20px;
+  font-size: 18px;
+}
+
+.buy-sell-frame {
+  height: 200px;
 }

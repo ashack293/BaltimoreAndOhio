@@ -7,28 +7,76 @@
   </head>
   <body>
   <div class="container">
-    <div class="row">
-      <div class="col-md-12 players">
-        <h2>Players</h2>
-          <div class="player-list">
-          </div>
-          <div class="input-group player-input-group">
-            <input type="text" class="form-control" id="inputPlayerName" placeholder="Enter Player Name">
-            <span class="input-group-btn">
-              <button class="btn btn-default" id="addPlayer" type="button">Add Player</button>
-            </span>
-          </div>
-          <div class="input-group player-input-group">
-              <button type="button" id="addPlayerDone" class="btn btn-success">Done Adding Players</button>
-          </div>
+    <div class="row header">
+      <h1>Baltimore &amp; Ohio Helper App</h1>
+    </div>
+    <div class="row setup">
+      <div class="col-md-6 setup">
+        <h2>Setup</h2>
+          <p>Add players to the game to begin.</p>
+        <div class="well">
+          <form class="form-inline">
+            <div class="form-group">
+              <div class="input-group player-input-group">
+                <input type="text" class="form-control" id="inputPlayerName" placeholder="Enter Player Name">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" id="addPlayer" type="button">Add Player</button>
+                </span>
+              </div>
+              <button type="submit" id="addPlayerDone" class="btn btn-success">Done Adding Players</button>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="col-md-12 companies">
-        <h2>Companies</h2>
-
-      </div>
+    </div>
+    <div class="row players">
       <div class="col-md-12">
+        <h2>Players</h2>
+          <table class="table table-striped player-table">
+            <tr><th>Name</th><th>Cash</th><th>Net Worth</th><th>Shares Owned</th></tr>
+          </table>
       </div>
-      <div class="col-md-12 log">
+    </div>
+    <div class="row companies">
+      <div class="col-md-12">
+        <h2>Companies</h2>
+        <table class="table table-striped company-table">
+          <tr><th>Name</th><th>Cash</th><th>Net Profit</th><th>Stock Value</th><th>Shares Owned</th>
+        </table>
+      </div>
+    </div>
+    <div class="row trades">
+      <div class="col-md-12">
+        <h2>Trades</h2>
+        <ul class="nav nav-tabs">
+          <li role="presentation" class="active"><a href="#" class="buy-tab"><h3>Buy</h3></a></li>
+          <li role="presentation"><a href="#" class="sell-tab"><h3>Sell</h3></a></a></li>
+        </ul>
+        <div class="buy-sell-frame">
+          <div class="buy-col">
+            <p>Buy!</p>
+          </div>
+          <div class="sell-col">
+            <p>Sell!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+     <div class="row tech">
+      <div class="col-md-12">
+        <h2>Tech Level</h2>
+        <p>This doesn't do anything yet</p>
+        <div class="btn-group btn-group-tech" role="group" aria-label="...">
+          <button type="button" class="btn btn-default active">1</button>
+          <button type="button" class="btn btn-default">2</button>
+          <button type="button" class="btn btn-default">3</button>
+          <button type="button" class="btn btn-default">4</button>
+          <button type="button" class="btn btn-default">5</button>
+        </div>
+      </div>
+    </div>
+    <div class="row log">
+      <div class="col-md-12">
         <div class="panel panel-default">
           <div class="panel-heading"><strong>Event Logs</strong></div>
           <div class="panel-body">
