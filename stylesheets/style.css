@@ -1,0 +1,25 @@
+/* company list */
+.blue {background-color:blue; color:white;}
+.pink {background-color:#FF00CC; color:white;}
+.yellow {background-color:yellow; color:black;}
+.orange {background-color:orange; color:black;}
+.brown {background-color:#663300; color:white;}
+.green {background-color:green; color:white;}
+.purple {background-color:#660099; color:white;}
+.white {background-color:white; color:black;}
+.red {background-color:red; color:white;}
+.gray {background-color:gray; color:white;}
+
+
+.player-list p {
+  font-size: 18px;
+}
+
+.player-input-group {
+  margin-bottom: 20px;
+}
+
+.log {
+  max-height:400px;
+  overflow-y: scroll;
+}
