@@ -60,17 +60,10 @@ function calculatePlayerNetWorth(player){
   });
 }
 
+// return share value for a company name
 function getShareValueForCompany(_companyName){
   var company = _.findWhere(companies, {companyName: _companyName});
   return company.shareValue;
-}
-
-function createCompanies(){
-    _.each(companies, function(company){
-      if(currentTechLevel >= company.techLevel){
-        addCompanyToView(company);
-      }
-    });
 }
 
 function allocateStartingFunds(){
@@ -87,14 +80,36 @@ function allocateStartingFunds(){
 // establish opening condition for the game
 function setupGame(){
   allocateStartingFunds();
-  createCompanies();
+  createCompaniesInView();
+  updateBuySellDropdowns();
 }
 
+
+// returns true/false for whether the string being evaluated is a company
+function stringIsCompanyName(string){
+  if(_.findWhere(companies, {companyName: string})){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function getCompanyByName(name){
+  return _.findWhere(companies, {companyName: name});
+}
 
 /////////////////////////////////
 
 ////////// UI Updates ///////////
 // keeps UI changes separate from game logic
+
+function createCompaniesInView(){
+  _.each(companies, function(company){
+    if(currentTechLevel >= company.techLevel){
+      addCompanyToView(company);
+    }
+  });
+}
 
 // use this to perform UI updates when adding a company
 function addCompanyToView(company){
@@ -107,6 +122,7 @@ function addCompanyToView(company){
   $('.company-table').append(companyHTML);
 }
 
+// resets table of players
 function updatePlayerView(){
   $('.player-table tr:gt(0)').remove();
   _.each(players, function(player){
@@ -122,6 +138,35 @@ function updatePlayerShareView(player){
   return '';
 }
 
+//populate dropdowns with all valid players and companies
+function updateBuySellDropdowns(){
+  $('#buyerSelect option').remove();
+  $('#buyCompanySelect option').remove();
+
+  _.each(players, function(player){
+    $('#buyerSelect').append('<option>' + player.playerName + '</option>');
+  });
+  $('#buyerSelect').append('<option role="separator" disabled="disabled"></option>');
+  _.each(companies, function(company){
+    $('#buyCompanySelect').append('<option>' + company.companyName + '</option>');
+    $('#buyerSelect').append('<option>' + company.companyName + '</option>');
+  });
+}
+
+function updateBuySharesInfo(companyName, _numberOfShares) {
+  var company = getCompanyByName(companyName);
+  var numberOfShares = 0;
+  if(_numberOfShares){
+    numberOfShares = _numberOfShares;
+  }
+
+  var price = numberOfShares * company.shareValue;
+
+  var message = '<h4>Buy ' + numberOfShares + ' shares of ' + companyName + ' at $' + company.shareValue + ' for a total of ' + '<strong>$' + price + '</strong>?</h4>';
+
+  $('#buySharesInfo').html(message);
+}
+
 // prints game history to the log at the bottom
 // status can be success, info, warning, danger
 function logEvent(message, status){
@@ -129,6 +174,17 @@ function logEvent(message, status){
 }
 
 
+////////// INPUT VALIDATION ////////
+function validateNumeric(evt) {
+  var theEvent = evt || window.event;
+  var key = theEvent.keyCode || theEvent.which;
+  key = String.fromCharCode( key );
+  var regex = /[0-9]|\./;
+  if( !regex.test(key) ) {
+    theEvent.returnValue = false;
+    if(theEvent.preventDefault) theEvent.preventDefault();
+  }
+}
 
 $(document).ready(function() {
 
@@ -174,5 +230,24 @@ $(document).ready(function() {
     logEvent('Finished adding players to the game.', 'info');
     setupGame();
   });
+
+  $('#buyerSelect').on('change', function() {
+    if(stringIsCompanyName(this.value)){
+      $('#buyCompanySelect').val(this.value);
+    }
+  });
+
+  $('#buyerSelect').on('change', function() {
+    updateBuySharesInfo(this.value);
+  });
+
+  $('#buySharesNumber').on('change', function() {
+    updateBuySharesInfo($('#buyCompanySelect').val(), this.value);
+  });
+
+  $('#purchaseButton').on('click', function(e){
+    alert('if only it were that simple');
+  });
+
 
 });

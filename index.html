@@ -54,7 +54,25 @@
         </ul>
         <div class="buy-sell-frame">
           <div class="buy-col">
-            <p>Buy!</p>
+            <form class="form-inline" id="buyForm">
+              <div class="form-group">
+                <label for="buyerSelect">Buyer (player or company)</label>
+                <select class="form-control" id="buyerSelect">
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="buyCompanySelect">Company</label>
+                <select class="form-control" id="buyCompanySelect">
+                </select>
+              </div><br />
+              <div class="form-group">
+                <label for="buySharesNumber">Number of Shares</label>
+                <input type="text" class="form-control" id="buySharesNumber" placeholder="1-10" onkeypress='validateNumeric(event)'>
+              </div><br />
+              <div id="buySharesInfo">
+              </div><br />
+              <button type="submit" class="btn btn-lg btn-primary" id="purchaseButton">Purchase</button>
+            </form>
           </div>
           <div class="sell-col">
             <p>Sell!</p>
@@ -65,14 +83,8 @@
      <div class="row tech">
       <div class="col-md-12">
         <h2>Tech Level</h2>
-        <p>This doesn't do anything yet</p>
-        <div class="btn-group btn-group-tech" role="group" aria-label="...">
-          <button type="button" class="btn btn-default active">1</button>
-          <button type="button" class="btn btn-default">2</button>
-          <button type="button" class="btn btn-default">3</button>
-          <button type="button" class="btn btn-default">4</button>
-          <button type="button" class="btn btn-default">5</button>
-        </div>
+        <p>WIP</p>
+
       </div>
     </div>
     <div class="row log">
