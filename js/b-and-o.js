@@ -10,6 +10,9 @@ var techValuations = {
   5:new Array(82, 91, 100)
 };
 
+// ordered array of all possible stock valuations
+var valuations = [34, 37, 41, 45, 50, 55, 60, 66, 74, 82, 91, 100, 110, 121, 133, 146, 160, 176, 194, 213, 234, 257, 282, 310, 341, 375];
+
 // show javascript alerts in addition to log messages?
 var showAlerts = false;
 
@@ -159,7 +162,40 @@ function trySellTransaction(seller, company, shares){
   }
   updatePlayerView();
   updateCompanyView();
+  logEvent(seller + ' sold  ' + shares + ' of ' + company + ' for $' + (shares*shareValue), 'success');
   updateSellMessage('Success!');
+}
+
+//manually update game parameters. good for both use in-game and to fix user errors.
+function adjustTransaction(entity, cash, profit, valuation){
+  var adjustEntity;
+  var entityIsCompany = false;
+  if(stringIsCompanyName(entity)){
+    adjustEntity = getCompanyByName(entity);
+    entityIsCompany = true;
+  } else {
+    adjustEntity = getPlayerByName(entity);
+  }
+  if(!isNaN(parseInt(cash))){
+    adjustEntity.cash = parseInt(cash);
+    logEvent('Adjusted cash for ' + entity + ': $' + cash, 'warning');
+  }
+  if(entityIsCompany){
+    if(!isNaN(parseInt(profit))){
+      adjustEntity.netProfit = profit;
+      logEvent('Adjusted profit for ' + entity + ': $' + profit, 'warning');
+    }
+    if(!isNaN(parseInt(valuation))){
+      adjustEntity.valuation = valuation;
+      logEvent('Adjusted valuation for ' + entity + ': $' + valuation, 'warning');
+    }
+  }
+  _.each(players, function(player){
+    calculatePlayerNetWorth(player);
+  });
+
+  updatePlayerView();
+  updateCompanyView();
 }
 
 // return share value for a company name
@@ -200,6 +236,7 @@ function availableOrphanedStocksForCompany(companyName){
 
 // shows success message when a transaction has been completed
 function updateBuyMessage(message){
+  $('#buySharesNumber').val('');
   $('.buy-message').html(message);
   $('.buy-message').addClass('text-success');
 }
@@ -207,6 +244,7 @@ function updateBuyMessage(message){
 
 // shows success message when a transaction has been completed
 function updateSellMessage(message){
+  $('#sellSharesNumber').val('');
   $('.sell-message').html(message);
   $('.sell-message').addClass('text-success');
 }
@@ -265,6 +303,11 @@ function updateBuySellDropdowns(){
   $('#buyCompanySelect option').remove();
   $('#sellerSelect option').remove();
   $('#adjustSelect option').remove();
+  $('#adjustValuation option').remove();
+
+  _.each(valuations, function(valuation){
+    $('#adjustValuation').append('<option>' + valuation + '</option>');
+  });
 
   _.each(players, function(player){
     $('#buyerSelect').append('<option>' + player.playerName + '</option>');
@@ -360,6 +403,7 @@ $(document).ready(function() {
     }
   });
 
+
   $('#addPlayer').on('click', function (e) {
     if($('#inputPlayerName').val().length > 0){
       var playerName = $('#inputPlayerName').val();
@@ -404,6 +448,11 @@ $(document).ready(function() {
   $('#sellButton').on('click', function(e){
     e.preventDefault();
     trySellTransaction($('#sellerSelect').val(), $('#sellCompanySelect').val(), $('#sellSharesNumber').val());
+  });
+
+  $('#adjustButton').on('click', function(e){
+    e.preventDefault();
+    adjustTransaction($('#adjustSelect').val(), $('#adjustCash').val(), $('#adjustProfit').val(), $('#adjustValuation').val());
   });
 
   $('.trades form').on('submit', function(e){
