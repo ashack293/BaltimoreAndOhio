@@ -31,6 +31,7 @@
         <ul class="nav nav-tabs">
           <li role="presentation" class="active"><a href="#" class="buy-tab"><h3>Buy</h3></a></li>
           <li role="presentation"><a href="#" class="sell-tab"><h3>Sell</h3></a></a></li>
+          <li role="presentation"><a href="#" class="adjust-tab"><h3>Adjust</h3></a></a></li>
         </ul>
         <div class="buy-sell-frame">
           <div class="buy-col">
@@ -55,7 +56,45 @@
             </form>
           </div>
           <div class="sell-col">
-            <p>Sell!</p>
+            <form class="form-inline" id="sellForm">
+              <div class="form-group">
+                <label for="sellerSelect">Seller</label><br />
+                <select class="form-control" id="sellerSelect">
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sellSharesNumber"># of Shares</label><br />
+                <input type="text" class="form-control" id="sellSharesNumber" placeholder="" onkeypress='validateNumeric(event)'>
+              </div>
+              <div class="form-group">
+                <label for="sellCompanySelect">Company</label>
+                <select class="form-control" id="sellCompanySelect"></select>
+              </div>
+              <button class="btn btn-lg btn-primary" id="sellButton">Sell</button>
+            </form>
+          </div>
+          <div class="adjust-col">
+            <p>Manually adjust player and company data.</p>
+            <form class="form-inline" id="adjustForm">
+              <div class="form-group">
+                <label for="adjustSelect">Player</label><br />
+                <select class="form-control" id="adjustSelect">
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adjustCash">Cash</label>
+                <input type="text" class="form-control" id="adjustCash" placeholder="" onkeypress='validateNumeric(event)'>
+              </div>
+              <div class="form-group">
+                <label for="adjustProfit">Net Profit</label>
+                <input type="text" class="form-control" id="adjustProfit" placeholder="companies only" onkeypress='validateNumeric(event)'>
+              </div>
+              <div class="form-group">
+                <label for="adjustValuation">Valuation</label>
+                <input type="text" class="form-control" id="adjustValuation" placeholder="companies only" onkeypress='validateNumeric(event)'>
+              </div><br />
+              <button class="btn btn-lg btn-primary" id="adjustPlayerButton">Adjust</button>
+            </form>
           </div>
         </div>
       </div>

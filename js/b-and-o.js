@@ -10,6 +10,9 @@ var techValuations = {
   5:new Array(82, 91, 100)
 };
 
+// show javascript alerts in addition to log messages?
+var showAlerts = false;
+
 var maxPlayers = 6;
 
 var currentTechLevel = 1;
@@ -119,13 +122,10 @@ function tryBuyTransaction(buyer, seller, shares){
   var saleValue = sellerCompany.valuation * shares;
   if(buyerEntity.cash < saleValue){
     logEvent('Sale price of $' + saleValue + ' is more than ' + buyer + ' can spend.', 'danger');
-    alert('Sale price of $' + saleValue + ' is more than ' + buyer + ' can spend.');
   } else if(!buyerIsCompany && (sellerCompany.sharesOwned < shares)){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
-    alert('Cannot purchase more shares of ' + seller + ' than are available for sale.');
   } else if(buyerIsCompany && (shares > availableOrphanedStocksForCompany(seller))){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
-    alert('Cannot purchase more shares of ' + seller + ' than are available for sale.');
   } else {
     // complete the sale
     buyerEntity.buyShares(seller, shares, sellerCompany.valuation);
@@ -141,6 +141,26 @@ function tryBuyTransaction(buyer, seller, shares){
   }
 }
 
+function trySellTransaction(seller, company, shares){
+  var sellerEntity = getPlayerByName(seller);
+  var shareValue = getValuationForCompany(company);
+  var availableShares = _.filter(sellerEntity.shares, function(share){
+    return share.companyName == company;
+  });
+  if(availableShares.length < shares){
+    logEvent('Cannot sell more shares of ' + company + ' than the player owns.', 'danger');
+    return;
+  }
+  for(var i = 0; i < shares; i++){
+    var getShare = availableShares[i];
+    sellerEntity.cash += shareValue;
+    sellerEntity.shares.pop(getShare);
+    orphanedStocks.push(getShare);
+  }
+  updatePlayerView();
+  updateCompanyView();
+  updateSellMessage('Success!');
+}
 
 // return share value for a company name
 function getValuationForCompany(_companyName){
@@ -183,6 +203,14 @@ function updateBuyMessage(message){
   $('.buy-message').html(message);
   $('.buy-message').addClass('text-success');
 }
+
+
+// shows success message when a transaction has been completed
+function updateSellMessage(message){
+  $('.sell-message').html(message);
+  $('.sell-message').addClass('text-success');
+}
+
 
 function updateCompanyView(){
   $('.company-table tr:gt(0)').remove();
@@ -235,16 +263,24 @@ function updatePlayerShareView(player){
 function updateBuySellDropdowns(){
   $('#buyerSelect option').remove();
   $('#buyCompanySelect option').remove();
+  $('#sellerSelect option').remove();
+  $('#adjustSelect option').remove();
 
   _.each(players, function(player){
     $('#buyerSelect').append('<option>' + player.playerName + '</option>');
+    $('#sellerSelect').append('<option>' + player.playerName + '</option>');
+    $('#adjustSelect').append('<option>' + player.playerName + '</option>');
   });
 
   $('#buyerSelect').append('<option role="separator" disabled="disabled"></option>');
+  $('#adjustSelect').append('<option role="separator" disabled="disabled"></option>');
   _.each(companies, function(company){
     $('#buyCompanySelect').append('<option>' + company.companyName + '</option>');
     $('#buyerSelect').append('<option>' + company.companyName + '</option>');
+    $('#adjustSelect').append('<option>' + company.companyName + '</option>');
+    $('#sellCompanySelect').append('<option>' + company.companyName + '</option>');
   });
+
 }
 
 function updateBuySharesInfo(companyName, _numberOfShares) {
@@ -263,7 +299,10 @@ function updateBuySharesInfo(companyName, _numberOfShares) {
 // prints game history to the log at the bottom
 // status can be success, info, warning, danger
 function logEvent(message, status){
- $('.log .panel-body').append('<div class="alert alert-' + status + '">' + message + '</div>');
+ $('.log .panel-body').prepend('<div class="alert alert-' + status + '">' + message + '</div>');
+ if(showAlerts){
+  alert(message);
+ }
 }
 
 
@@ -282,6 +321,7 @@ function validateNumeric(evt) {
 $(document).ready(function() {
 
   $('.sell-col').hide();
+  $('.adjust-col').hide();
   $('.trades').hide();
 
   $('.buy-tab').on('click', function(e){
@@ -290,6 +330,8 @@ $(document).ready(function() {
       $(this).parent().addClass('active');
       $('.sell-tab').parent().removeClass('active');
       $('.sell-col').hide();
+      $('.adjust-tab').parent().removeClass('active');
+      $('.adjust-col').hide();
       $('.buy-col').show();
     }
   });
@@ -300,7 +342,21 @@ $(document).ready(function() {
       $(this).parent().addClass('active');
       $('.buy-tab').parent().removeClass('active');
       $('.buy-col').hide();
+      $('.adjust-tab').parent().removeClass('active');
+      $('.adjust-col').hide();
       $('.sell-col').show();
+    }
+  });
+
+  $('.adjust-tab').on('click', function(e){
+    e.preventDefault();
+    if(!$(this).parent().hasClass('active')){
+      $(this).parent().addClass('active');
+      $('.buy-tab').parent().removeClass('active');
+      $('.buy-col').hide();
+      $('.sell-tab').parent().removeClass('active');
+      $('.sell-col').hide();
+      $('.adjust-col').show();
     }
   });
 
@@ -345,8 +401,12 @@ $(document).ready(function() {
     tryBuyTransaction($('#buyerSelect').val(), $('#buyCompanySelect').val(), $('#buySharesNumber').val());
   });
 
-  $('#buyForm').on('submit', function(e){
+  $('#sellButton').on('click', function(e){
     e.preventDefault();
+    trySellTransaction($('#sellerSelect').val(), $('#sellCompanySelect').val(), $('#sellSharesNumber').val());
   });
 
+  $('.trades form').on('submit', function(e){
+    e.preventDefault();
+  });
 });
