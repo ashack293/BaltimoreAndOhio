@@ -1,4 +1,7 @@
+"use strict";
+
 // tech levels and corresponding possible company valuations
+// at some point we might build the tech levels into this tool
 var techValuations = {
   1:new Array(55, 60, 66),
   2:new Array(60, 66, 74),
@@ -13,6 +16,7 @@ var currentTechLevel = 1;
 // global funds available at game start
 var startingFunds = 1500;
 var players = [];
+var orphanedStocks = [];
 
 var co_bando = new company("Baltimore & Ohio", "Baltimore", "blue", 1);
 var co_bandm = new company("Boston & Maine", "Boston", "pink", 1);
@@ -29,16 +33,23 @@ var co_wbsh = new company("Wabash", "Albany", "gray", 1);
 // collection of the company objects
 var companies = [co_bando, co_bandm, co_cando, co_icent, co_erie, co_nyc, co_nipl, co_nynhh, co_penn, co_wbsh];
 
-
 // company instantiation
 function company(name, starting_city, co_color, tech_level) {
   this.companyName = name;
-  this.shareValue = 0;
+  this.valuation = 80;
   this.netProfit = 0;
   this.cash = 0;
   this.companyColor = co_color;
   this.sharesOwned = 10;
   this.techLevel = tech_level;
+  this.buyShares = function(companyName, shareCount, purchasePrice){
+    if(companyName != this.companyName){
+      logEvent('Company can only buy its own shares.', 'warning');
+      return;
+    }
+    this.cash -= (shareCount * purchasePrice);
+    this.sharesOwned += parseInt(shareCount);
+  }
 }
 
 // player instantiation
@@ -47,6 +58,21 @@ function player(name) {
   this.cash = 0;
   this.netWorth = 0;
   this.shares = [];
+  this.buyShares = function(companyName, shareCount, purchasePrice){
+      this.cash -= (shareCount * purchasePrice);
+      for(var i = 0; i < shareCount; i++){
+        var newShare = new share(companyName, 1, purchasePrice);
+        this.shares.push(newShare);
+      }
+      calculatePlayerNetWorth(this);
+      logEvent(this.playerName + ' purchased ' + shareCount + ' of ' + companyName + ' for $' + (shareCount * purchasePrice), 'success');
+  }
+}
+
+function share(companyName, shareCount, purchasePrice){
+  this.companyName = companyName;
+  this.shareCount = shareCount;
+  this.purchasePrice = purchasePrice;
 }
 
 
@@ -56,14 +82,9 @@ function player(name) {
 function calculatePlayerNetWorth(player){
   var netWorth = player.cash;
   _.each(player.shares, function(share){
-    netWorth += (getShareValueForCompany(share.companyName) * share.shareCount);
+    netWorth += (getValuationForCompany(share.companyName) * share.shareCount);
   });
-}
-
-// return share value for a company name
-function getShareValueForCompany(_companyName){
-  var company = _.findWhere(companies, {companyName: _companyName});
-  return company.shareValue;
+  player.netWorth = netWorth;
 }
 
 function allocateStartingFunds(){
@@ -80,10 +101,52 @@ function allocateStartingFunds(){
 // establish opening condition for the game
 function setupGame(){
   allocateStartingFunds();
-  createCompaniesInView();
+  updateCompanyView();
   updateBuySellDropdowns();
 }
 
+function tryBuyTransaction(buyer, seller, shares){
+  var buyerEntity;
+  var buyerIsCompany = false;
+  if(stringIsCompanyName(buyer)){
+    buyerEntity = getCompanyByName(buyer);
+    buyerIsCompany = true;
+  } else {
+    buyerEntity = getPlayerByName(buyer);
+  }
+
+  var sellerCompany = getCompanyByName(seller);
+  var saleValue = sellerCompany.valuation * shares;
+  if(buyerEntity.cash < saleValue){
+    logEvent('Sale price of $' + saleValue + ' is more than ' + buyer + ' can spend.', 'danger');
+    alert('Sale price of $' + saleValue + ' is more than ' + buyer + ' can spend.');
+  } else if(!buyerIsCompany && (sellerCompany.sharesOwned < shares)){
+    logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
+    alert('Cannot purchase more shares of ' + seller + ' than are available for sale.');
+  } else if(buyerIsCompany && (shares > availableOrphanedStocksForCompany(seller))){
+    logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
+    alert('Cannot purchase more shares of ' + seller + ' than are available for sale.');
+  } else {
+    // complete the sale
+    buyerEntity.buyShares(seller, shares, sellerCompany.valuation);
+    if(buyerIsCompany){
+
+    } else {
+      sellerCompany.sharesOwned -= shares;
+      sellerCompany.cash += saleValue;
+      updatePlayerView();
+    }
+    updateCompanyView();
+    updateBuyMessage('Success!');
+  }
+}
+
+
+// return share value for a company name
+function getValuationForCompany(_companyName){
+  var company = _.findWhere(companies, {companyName: _companyName});
+  return company.valuation;
+}
 
 // returns true/false for whether the string being evaluated is a company
 function stringIsCompanyName(string){
@@ -98,12 +161,31 @@ function getCompanyByName(name){
   return _.findWhere(companies, {companyName: name});
 }
 
+function getPlayerByName(name){
+  return _.findWhere(players, {playerName: name});
+}
+
+// returns number of orphaned stocks available for a given company
+function availableOrphanedStocksForCompany(companyName){
+  var groupedStocks = _.groupBy(orphanedStocks, function(stock){
+    return stock.companyName;
+  })
+  return groupedStocks[companyName].length;
+}
+
 /////////////////////////////////
 
 ////////// UI Updates ///////////
 // keeps UI changes separate from game logic
 
-function createCompaniesInView(){
+// shows success message when a transaction has been completed
+function updateBuyMessage(message){
+  $('.buy-message').html(message);
+  $('.buy-message').addClass('text-success');
+}
+
+function updateCompanyView(){
+  $('.company-table tr:gt(0)').remove();
   _.each(companies, function(company){
     if(currentTechLevel >= company.techLevel){
       addCompanyToView(company);
@@ -116,7 +198,7 @@ function addCompanyToView(company){
   var companyHTML = '<tr><td data-ref="' + company.companyName + '" class="company-name"><div class="company-swatch ' + company.companyColor + '"></div>' + company.companyName + '</td>';
   companyHTML += '<td>$' + company.cash + '</td>';
   companyHTML += '<td>$' + company.netProfit + '</td>';
-  companyHTML += '<td>$' + company.shareValue + '</td>';
+  companyHTML += '<td>$' + company.valuation + '</td>';
   companyHTML += '<td>' + company.sharesOwned + '</td>';
   companyHTML += '</tr>';
   $('.company-table').append(companyHTML);
@@ -135,10 +217,21 @@ function updatePlayerView(){
 }
 
 function updatePlayerShareView(player){
-  return '';
+  var output = '';
+
+  var groupedShares = _.groupBy(player.shares, function(share){
+    return share.companyName;
+  });
+
+  _.each(groupedShares, function(group){
+    var share = group[0];
+    var company = getCompanyByName(share.companyName);
+    output += '<div class="company-swatch ' + company.companyColor + '"></div>' + share.companyName + ': ' +  group.length + ' <br />';
+  });
+  return output;
 }
 
-//populate dropdowns with all valid players and companies
+//populate dropdowns with all valid players and companies, as well as orphaned stocks
 function updateBuySellDropdowns(){
   $('#buyerSelect option').remove();
   $('#buyCompanySelect option').remove();
@@ -146,6 +239,7 @@ function updateBuySellDropdowns(){
   _.each(players, function(player){
     $('#buyerSelect').append('<option>' + player.playerName + '</option>');
   });
+
   $('#buyerSelect').append('<option role="separator" disabled="disabled"></option>');
   _.each(companies, function(company){
     $('#buyCompanySelect').append('<option>' + company.companyName + '</option>');
@@ -160,9 +254,8 @@ function updateBuySharesInfo(companyName, _numberOfShares) {
     numberOfShares = _numberOfShares;
   }
 
-  var price = numberOfShares * company.shareValue;
-
-  var message = '<h4>Buy ' + numberOfShares + ' shares of ' + companyName + ' at $' + company.shareValue + ' for a total of ' + '<strong>$' + price + '</strong>?</h4>';
+  var price = numberOfShares * company.valuation;
+  var message = '<h4 class="buy-message">Buy ' + numberOfShares + ' shares of ' + companyName + ' at $' + company.valuation + ' for a total of ' + '<strong>$' + price + '</strong>?</h4>';
 
   $('#buySharesInfo').html(message);
 }
@@ -189,6 +282,7 @@ function validateNumeric(evt) {
 $(document).ready(function() {
 
   $('.sell-col').hide();
+  $('.trades').hide();
 
   $('.buy-tab').on('click', function(e){
     e.preventDefault();
@@ -227,6 +321,7 @@ $(document).ready(function() {
   $('#addPlayerDone').on('click', function (e) {
     e.preventDefault();
     $('.setup').hide();
+    $('.trades').show();
     logEvent('Finished adding players to the game.', 'info');
     setupGame();
   });
@@ -246,8 +341,12 @@ $(document).ready(function() {
   });
 
   $('#purchaseButton').on('click', function(e){
-    alert('if only it were that simple');
+    e.preventDefault();
+    tryBuyTransaction($('#buyerSelect').val(), $('#buyCompanySelect').val(), $('#buySharesNumber').val());
   });
 
+  $('#buyForm').on('submit', function(e){
+    e.preventDefault();
+  });
 
 });

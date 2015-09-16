@@ -9,23 +9,61 @@
   <div class="container">
     <div class="row header">
       <h1>Baltimore &amp; Ohio Helper App</h1>
-    </div>
-    <div class="row setup">
       <div class="col-md-6 setup">
         <h2>Setup</h2>
-          <p>Add players to the game to begin.</p>
         <div class="well">
           <form class="form-inline">
             <div class="form-group">
+                <p>First, add players to the game. Then click <strong>Done</strong>, and companies will be generated.</p>
               <div class="input-group player-input-group">
                 <input type="text" class="form-control" id="inputPlayerName" placeholder="Enter Player Name">
                 <span class="input-group-btn">
                   <button class="btn btn-default" id="addPlayer" type="button">Add Player</button>
                 </span>
               </div>
-              <button type="submit" id="addPlayerDone" class="btn btn-success">Done Adding Players</button>
+              <p></p>
+              <button type="submit" id="addPlayerDone" class="btn btn-success">Done</button>
             </div>
           </form>
+        </div>
+      </div>
+      <div class="col-md-6 trades">
+        <ul class="nav nav-tabs">
+          <li role="presentation" class="active"><a href="#" class="buy-tab"><h3>Buy</h3></a></li>
+          <li role="presentation"><a href="#" class="sell-tab"><h3>Sell</h3></a></a></li>
+        </ul>
+        <div class="buy-sell-frame">
+          <div class="buy-col">
+            <form class="form-inline" id="buyForm">
+              <div class="form-group">
+                <label for="buyerSelect">Buyer (player or company)</label><br />
+                <select class="form-control" id="buyerSelect">
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="buyCompanySelect">Seller (company or orphan stocks)</label><br />
+                <select class="form-control" id="buyCompanySelect">
+                </select>
+              </div><br />
+              <div class="form-group">
+                <label for="buySharesNumber">Number of Shares</label><br />
+                <input type="text" class="form-control" id="buySharesNumber" placeholder="1-10" onkeypress='validateNumeric(event)'>
+              </div><br />
+              <div id="buySharesInfo">
+              </div><br />
+              <button class="btn btn-lg btn-primary" id="purchaseButton">Purchase</button>
+            </form>
+          </div>
+          <div class="sell-col">
+            <p>Sell!</p>
+          </div>
+        </div>
+      </div>
+      <div class="log col-md-6">
+        <div class="panel panel-default">
+          <div class="panel-heading"><strong>Event Logs</strong></div>
+          <div class="panel-body">
+          </div>
         </div>
       </div>
     </div>
@@ -41,45 +79,18 @@
       <div class="col-md-12">
         <h2>Companies</h2>
         <table class="table table-striped company-table">
-          <tr><th>Name</th><th>Cash</th><th>Net Profit</th><th>Stock Value</th><th>Shares Owned</th>
+          <tr><th>Name</th><th>Cash</th><th>Net Profit</th><th>Valuation</th><th>Shares Owned</th>
         </table>
       </div>
     </div>
-    <div class="row trades">
+    <div class="row footer">
       <div class="col-md-12">
-        <h2>Trades</h2>
-        <ul class="nav nav-tabs">
-          <li role="presentation" class="active"><a href="#" class="buy-tab"><h3>Buy</h3></a></li>
-          <li role="presentation"><a href="#" class="sell-tab"><h3>Sell</h3></a></a></li>
-        </ul>
-        <div class="buy-sell-frame">
-          <div class="buy-col">
-            <form class="form-inline" id="buyForm">
-              <div class="form-group">
-                <label for="buyerSelect">Buyer (player or company)</label>
-                <select class="form-control" id="buyerSelect">
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="buyCompanySelect">Company</label>
-                <select class="form-control" id="buyCompanySelect">
-                </select>
-              </div><br />
-              <div class="form-group">
-                <label for="buySharesNumber">Number of Shares</label>
-                <input type="text" class="form-control" id="buySharesNumber" placeholder="1-10" onkeypress='validateNumeric(event)'>
-              </div><br />
-              <div id="buySharesInfo">
-              </div><br />
-              <button type="submit" class="btn btn-lg btn-primary" id="purchaseButton">Purchase</button>
-            </form>
-          </div>
-          <div class="sell-col">
-            <p>Sell!</p>
-          </div>
-        </div>
+        <p></p>
+        <p>Source code available at <a href="https://github.com/ashack293/BaltimoreAndOhio" target="_blank">https://github.com/ashack293/BaltimoreAndOhio</a>.</p>
+        <p></p>
       </div>
     </div>
+    <!--
      <div class="row tech">
       <div class="col-md-12">
         <h2>Tech Level</h2>
@@ -87,19 +98,11 @@
 
       </div>
     </div>
-    <div class="row log">
-      <div class="col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading"><strong>Event Logs</strong></div>
-          <div class="panel-body">
-          </div>
-        </div>
-      </div>
-    </div>
+    -->
   </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="js/b-and-o.js"></script>
   </body>
 </html>

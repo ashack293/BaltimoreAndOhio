@@ -15,9 +15,13 @@
 }
 
 .log {
-  max-height:400px;
+  height:300px;
   overflow-y: scroll;
   margin-top: 30px;
+}
+
+.trades {
+  margin-bottom: 40px;
 }
 
 .company-swatch {
@@ -39,7 +43,6 @@
 }
 
 .buy-sell-frame {
-  height: 250px;
   padding:30px;
   border: 1px solid rgb(221,221,221);
   border-top: 0px;
