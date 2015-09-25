@@ -196,6 +196,7 @@ function adjustTransaction(entity, cash, profit, valuation){
 
   updatePlayerView();
   updateCompanyView();
+  updateAdjustMessage('');
 }
 
 // return share value for a company name
@@ -249,6 +250,11 @@ function updateSellMessage(message){
   $('.sell-message').addClass('text-success');
 }
 
+function updateAdjustMessage(message){
+  $('#adjustCash').val('');
+  $('#adjustProfit').val('');
+  $('#adjustValuation').val(' ');
+}
 
 function updateCompanyView(){
   $('.company-table tr:gt(0)').remove();
@@ -305,6 +311,7 @@ function updateBuySellDropdowns(){
   $('#adjustSelect option').remove();
   $('#adjustValuation option').remove();
 
+  $('#adjustValuation').append('<option selected="selected"> </option>');
   _.each(valuations, function(valuation){
     $('#adjustValuation').append('<option>' + valuation + '</option>');
   });
@@ -348,6 +355,29 @@ function logEvent(message, status){
  }
 }
 
+function changeTabState(selectedTab, selectedPanel){
+  if(!$(selectedTab).parent().hasClass('active')){
+    _.each($('.transaction-tab-li'), function(tab){
+      $(tab).removeClass('active');
+    });
+
+    _.each($('.transaction-col'), function(panel){
+      $(panel).hide();
+    });
+
+    $(selectedTab).parent().addClass('active');
+    $(selectedPanel).show();
+  }
+  /*
+  if(!selectedTab.parent().hasClass('active')){
+    selectedTab.parent().addClass('active');
+    $('.sell-tab').parent().removeClass('active');
+    $('.sell-col').hide();
+    $('.adjust-tab').parent().removeClass('active');
+    $('.adjust-col').hide();
+    $('.buy-col').show();
+  }*/
+}
 
 ////////// INPUT VALIDATION ////////
 function validateNumeric(evt) {
@@ -369,38 +399,22 @@ $(document).ready(function() {
 
   $('.buy-tab').on('click', function(e){
     e.preventDefault();
-    if(!$(this).parent().hasClass('active')){
-      $(this).parent().addClass('active');
-      $('.sell-tab').parent().removeClass('active');
-      $('.sell-col').hide();
-      $('.adjust-tab').parent().removeClass('active');
-      $('.adjust-col').hide();
-      $('.buy-col').show();
-    }
+    changeTabState($(this), $('.buy-col'));
   });
 
   $('.sell-tab').on('click', function(e){
     e.preventDefault();
-    if(!$(this).parent().hasClass('active')){
-      $(this).parent().addClass('active');
-      $('.buy-tab').parent().removeClass('active');
-      $('.buy-col').hide();
-      $('.adjust-tab').parent().removeClass('active');
-      $('.adjust-col').hide();
-      $('.sell-col').show();
-    }
+    changeTabState($(this), $('.sell-col'));
   });
 
   $('.adjust-tab').on('click', function(e){
     e.preventDefault();
-    if(!$(this).parent().hasClass('active')){
-      $(this).parent().addClass('active');
-      $('.buy-tab').parent().removeClass('active');
-      $('.buy-col').hide();
-      $('.sell-tab').parent().removeClass('active');
-      $('.sell-col').hide();
-      $('.adjust-col').show();
-    }
+    changeTabState($(this), $('.adjust-col'));
+  });
+
+  $('.dividends-tab').on('click', function(e){
+    e.preventDefault();
+    changeTabState($(this), $('.dividend-col'));
   });
 
 
