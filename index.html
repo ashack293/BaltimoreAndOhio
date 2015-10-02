@@ -32,7 +32,7 @@
           <li role="presentation" class="transaction-tab-li active"><a href="#" class="buy-tab"><h3>Buy</h3></a></li>
           <li role="presentation" class="transaction-tab-li"><a href="#" class="sell-tab"><h3>Sell</h3></a></a></li>
           <li role="presentation" class="transaction-tab-li"><a href="#" class="adjust-tab"><h3>Adjust</h3></a></a></li>
-          <li role="presentation" class="transaction-tab-li"><a href="#" class="dividends-tab"><h3>Dividends</h3></a></a></li>
+          <li role="presentation" class="transaction-tab-li"><a href="#" class="dividends-tab"><h3>Payouts</h3></a></a></li>
         </ul>
         <div class="buy-sell-frame">
           <div class="transaction-col buy-col">
@@ -75,7 +75,7 @@
             </form>
           </div>
           <div class="transaction-col adjust-col">
-            <p>Manually adjust player and company data.</p>
+            <p>Manually adjust player and company data when tech is bought/sold, profit changes, etc.</p>
             <form class="form-inline" id="adjustForm">
               <div class="form-group">
                 <label for="adjustSelect">Player / Company</label><br />
@@ -98,6 +98,16 @@
             </form>
           </div>
           <div class="transaction-col dividend-col">
+            <p>Distribute a company's current net profit to shareholders or withhold the revenue in the company treasury.</p>
+            <form class="form-inline" id="dividendForm">
+              <div class="form-group">
+                <label for="dividendSelect">Company</label><br />
+                <select class="form-control" id="dividendSelect">
+                </select>
+              </div>
+              <button class="btn btn-lg btn-primary" id="dividendsPayButton">Pay Dividends</button>
+              <button class="btn btn-lg btn-primary" id="dividendsWithholdButton">Withhold Revenue</button>
+            </form>
           </div>
         </div>
       </div>

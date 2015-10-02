@@ -108,7 +108,7 @@ function allocateStartingFunds(){
 function setupGame(){
   allocateStartingFunds();
   updateCompanyView();
-  updateBuySellDropdowns();
+  updateDropdowns();
 }
 
 function tryBuyTransaction(buyer, seller, shares){
@@ -133,13 +133,18 @@ function tryBuyTransaction(buyer, seller, shares){
     // complete the sale
     buyerEntity.buyShares(seller, shares, sellerCompany.valuation);
     if(buyerIsCompany){
+      // destroy the orphaned stocks
+      // TODO process the orphaned stock transaction
+      for(var i = shares; shares > 0; i--){
 
+      }
     } else {
       sellerCompany.sharesOwned -= shares;
       sellerCompany.cash += saleValue;
       updatePlayerView();
     }
     updateCompanyView();
+    updateDropdowns();
     updateBuyMessage('Success!');
   }
 }
@@ -162,7 +167,8 @@ function trySellTransaction(seller, company, shares){
   }
   updatePlayerView();
   updateCompanyView();
-  logEvent(seller + ' sold  ' + shares + ' of ' + company + ' for $' + (shares*shareValue), 'success');
+  updateDropdowns();
+  logEvent(seller + ' sold  ' + shares + ' shares of ' + company + ' for $' + (shares*shareValue), 'success');
   updateSellMessage('Success!');
 }
 
@@ -199,6 +205,50 @@ function adjustTransaction(entity, cash, profit, valuation){
   updateAdjustMessage('');
 }
 
+// try to add company's revenue to their cash holdings
+function tryWithholdDividends(_companyName){
+  if(stringIsCompanyName(_companyName)){
+    var company = getCompanyByName(_companyName);
+    company.cash += parseInt(company.netProfit);
+    logEvent(company.companyName + ' withholds revenue:  $' + company.netProfit + ' added to treasury.', 'success');
+    updatePlayerView();
+    updateCompanyView();
+  } else {
+      logEvent('Unable to locate company ' + _companyName, 'warning');
+  }
+}
+
+// try to pay dividends on a company's revenue
+function tryPayDividends(_companyName){
+  if(stringIsCompanyName(_companyName)){
+    var company = getCompanyByName(_companyName);
+    var singleDividend = company.netProfit / 10;
+    var companyShare = company.sharesOwned * singleDividend;
+    company.cash += parseInt(companyShare);
+
+    logEvent(company.companyName + ' pays dividends:  $' + companyShare + ' added to treasury.', 'success');
+
+    // iterate through each player and pay them out for their shares in the company
+    _.each(players, function(player){
+      var playerRevenue = 0;
+      _.each(player.shares, function(share){
+        if(share.companyName == company.companyName){
+          playerRevenue += parseInt(singleDividend);
+        }
+      });
+      if(playerRevenue > 0){
+        player.cash += parseInt(playerRevenue);
+        logEvent(player.playerName + ' receives dividends of:  $' + playerRevenue, 'success');
+      }
+    });
+
+    updatePlayerView();
+    updateCompanyView();
+  } else {
+    logEvent('Unable to locate company ' + _companyName, 'warning');
+  }
+}
+
 // return share value for a company name
 function getValuationForCompany(_companyName){
   var company = _.findWhere(companies, {companyName: _companyName});
@@ -227,7 +277,11 @@ function availableOrphanedStocksForCompany(companyName){
   var groupedStocks = _.groupBy(orphanedStocks, function(stock){
     return stock.companyName;
   })
-  return groupedStocks[companyName].length;
+  if(groupedStocks[companyName]){
+    return groupedStocks[companyName].length;
+  } else {
+    return 0;
+  }
 }
 
 /////////////////////////////////
@@ -304,11 +358,12 @@ function updatePlayerShareView(player){
 }
 
 //populate dropdowns with all valid players and companies, as well as orphaned stocks
-function updateBuySellDropdowns(){
+function updateDropdowns(){
   $('#buyerSelect option').remove();
   $('#buyCompanySelect option').remove();
   $('#sellerSelect option').remove();
   $('#adjustSelect option').remove();
+  $('#dividendSelect option').remove();
   $('#adjustValuation option').remove();
 
   $('#adjustValuation').append('<option selected="selected"> </option>');
@@ -329,8 +384,17 @@ function updateBuySellDropdowns(){
     $('#buyerSelect').append('<option>' + company.companyName + '</option>');
     $('#adjustSelect').append('<option>' + company.companyName + '</option>');
     $('#sellCompanySelect').append('<option>' + company.companyName + '</option>');
+    $('#dividendSelect').append('<option>' + company.companyName + '</option>');
   });
-
+  if(orphanedStocks.length > 0){
+    $('#buyCompanySelect').append('<option role="separator" disabled="disabled"></option>');
+    _.each(companies, function(company){
+      var orphans = availableOrphanedStocksForCompany(company.companyName);
+      if(orphans > 0){
+        $('#buyCompanySelect').append('<option>' + orphans + ' orphaned ' + company.companyName + '</option>');
+      }
+    });
+  }
 }
 
 function updateBuySharesInfo(companyName, _numberOfShares) {
@@ -368,15 +432,6 @@ function changeTabState(selectedTab, selectedPanel){
     $(selectedTab).parent().addClass('active');
     $(selectedPanel).show();
   }
-  /*
-  if(!selectedTab.parent().hasClass('active')){
-    selectedTab.parent().addClass('active');
-    $('.sell-tab').parent().removeClass('active');
-    $('.sell-col').hide();
-    $('.adjust-tab').parent().removeClass('active');
-    $('.adjust-col').hide();
-    $('.buy-col').show();
-  }*/
 }
 
 ////////// INPUT VALIDATION ////////
@@ -395,6 +450,7 @@ $(document).ready(function() {
 
   $('.sell-col').hide();
   $('.adjust-col').hide();
+  $('.dividend-col').hide();
   $('.trades').hide();
 
   $('.buy-tab').on('click', function(e){
@@ -467,6 +523,16 @@ $(document).ready(function() {
   $('#adjustButton').on('click', function(e){
     e.preventDefault();
     adjustTransaction($('#adjustSelect').val(), $('#adjustCash').val(), $('#adjustProfit').val(), $('#adjustValuation').val());
+  });
+
+  $('#dividendsPayButton').on('click', function(e){
+    e.preventDefault();
+    tryPayDividends($('#dividendSelect').val());
+  });
+
+  $('#dividendsWithholdButton').on('click', function(e){
+    e.preventDefault();
+    tryWithholdDividends($('#dividendSelect').val());
   });
 
   $('.trades form').on('submit', function(e){
