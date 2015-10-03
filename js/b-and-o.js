@@ -111,7 +111,14 @@ function setupGame(){
   updateDropdowns();
 }
 
-function tryBuyTransaction(buyer, seller, shares){
+/* attempt a purchase, check all possible errors and enforce game rules:
+- only 10 stocks can be in play for each company
+- companies can only buy their own, orphaned stock
+- purchases cannot exceed the buyer's cash
+- purchases may not exceed available shares
+*/
+function tryBuyTransaction(buyer, seller, shares, buyingOrphans){
+  console.dir(orphanedStocks);
   var buyerEntity;
   var buyerIsCompany = false;
   if(stringIsCompanyName(buyer)){
@@ -127,6 +134,8 @@ function tryBuyTransaction(buyer, seller, shares){
     logEvent('Sale price of $' + saleValue + ' is more than ' + buyer + ' can spend.', 'danger');
   } else if(!buyerIsCompany && (sellerCompany.sharesOwned < shares)){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
+  } else if(buyerIsCompany && (buyer != seller)){
+    logEvent('Cannot purchase shares of a different company.', 'danger');
   } else if(buyerIsCompany && (shares > availableOrphanedStocksForCompany(seller))){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
   } else {
@@ -135,6 +144,8 @@ function tryBuyTransaction(buyer, seller, shares){
     if(buyerIsCompany){
       // destroy the orphaned stocks
       // TODO process the orphaned stock transaction
+      var matchingOrphans = _.where(orphanedStocks, {companyName: buyerEntity.companyName});
+      console.dir(matchingOrphans);
       for(var i = shares; shares > 0; i--){
 
       }
@@ -150,6 +161,7 @@ function tryBuyTransaction(buyer, seller, shares){
 }
 
 function trySellTransaction(seller, company, shares){
+  console.dir(orphanedStocks);
   var sellerEntity = getPlayerByName(seller);
   var shareValue = getValuationForCompany(company);
   var availableShares = _.filter(sellerEntity.shares, function(share){
@@ -159,6 +171,7 @@ function trySellTransaction(seller, company, shares){
     logEvent('Cannot sell more shares of ' + company + ' than the player owns.', 'danger');
     return;
   }
+  // TODO: make sure we pop the correct shares
   for(var i = 0; i < shares; i++){
     var getShare = availableShares[i];
     sellerEntity.cash += shareValue;
@@ -391,7 +404,7 @@ function updateDropdowns(){
     _.each(companies, function(company){
       var orphans = availableOrphanedStocksForCompany(company.companyName);
       if(orphans > 0){
-        $('#buyCompanySelect').append('<option>' + orphans + ' orphaned ' + company.companyName + '</option>');
+        $('#buyCompanySelect').append('<option>(orphaned) ' + company.companyName + '</option>');
       }
     });
   }
@@ -507,12 +520,15 @@ $(document).ready(function() {
   });
 
   $('#buySharesNumber').on('change', function() {
-    updateBuySharesInfo($('#buyCompanySelect').val(), this.value);
+    var buyCompany =  $('#buyCompanySelect').val().replace('(orphaned) ', '');
+    updateBuySharesInfo(buyCompany, this.value);
   });
 
   $('#purchaseButton').on('click', function(e){
     e.preventDefault();
-    tryBuyTransaction($('#buyerSelect').val(), $('#buyCompanySelect').val(), $('#buySharesNumber').val());
+    // send the buyer, seller, share count, and a flag indicating whether the stocks being purchased are orphaned
+    var buyCompany =  $('#buyCompanySelect').val().replace('(orphaned) ', '');
+    tryBuyTransaction($('#buyerSelect').val(), buyCompany, $('#buySharesNumber').val(), ($('#buyCompanySelect').val().indexOf('orphaned') > 1));
   });
 
   $('#sellButton').on('click', function(e){
