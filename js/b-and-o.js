@@ -175,9 +175,13 @@ function trySellTransaction(seller, company, shares){
   for(var i = 0; i < shares; i++){
     var getShare = availableShares[i];
     sellerEntity.cash += shareValue;
-    sellerEntity.shares.pop(getShare);
+    var shareIndex = _.findIndex(sellerEntity.shares, function(share){
+      return share.companyName == company;
+    });
+    sellerEntity.shares.splice(shareIndex, 1);
     orphanedStocks.push(getShare);
   }
+
   updatePlayerView();
   updateCompanyView();
   updateDropdowns();
@@ -375,6 +379,7 @@ function updateDropdowns(){
   $('#buyerSelect option').remove();
   $('#buyCompanySelect option').remove();
   $('#sellerSelect option').remove();
+  $('#sellCompanySelect option').remove();
   $('#adjustSelect option').remove();
   $('#dividendSelect option').remove();
   $('#adjustValuation option').remove();
