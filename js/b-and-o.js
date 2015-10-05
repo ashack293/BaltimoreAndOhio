@@ -22,7 +22,6 @@ var currentTechLevel = 1;
 // global funds available at game start
 var startingFunds = 1500;
 var players = [];
-var orphanedStocks = [];
 
 var co_bando = new company("Baltimore & Ohio", "Baltimore", "blue", 1);
 var co_bandm = new company("Boston & Maine", "Boston", "pink", 1);
@@ -47,6 +46,7 @@ function company(name, starting_city, co_color, tech_level) {
   this.cash = 0;
   this.companyColor = co_color;
   this.sharesOwned = 10;
+  this.sharesOrphaned = 0;
   this.techLevel = tech_level;
   this.buyShares = function(companyName, shareCount, purchasePrice){
     if(companyName != this.companyName){
@@ -55,6 +55,7 @@ function company(name, starting_city, co_color, tech_level) {
     }
     this.cash -= (shareCount * purchasePrice);
     this.sharesOwned += parseInt(shareCount);
+    this.sharesOrphaned -= parseInt(shareCount);
   }
 }
 
@@ -118,7 +119,6 @@ function setupGame(){
 - purchases may not exceed available shares
 */
 function tryBuyTransaction(buyer, seller, shares, buyingOrphans){
-  console.dir(orphanedStocks);
   var buyerEntity;
   var buyerIsCompany = false;
   if(stringIsCompanyName(buyer)){
@@ -136,22 +136,21 @@ function tryBuyTransaction(buyer, seller, shares, buyingOrphans){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
   } else if(buyerIsCompany && (buyer != seller)){
     logEvent('Cannot purchase shares of a different company.', 'danger');
-  } else if(buyerIsCompany && (shares > availableOrphanedStocksForCompany(seller))){
+  } else if(buyerIsCompany && (shares > sellerCompany.sharesOrphaned)){
     logEvent('Cannot purchase more shares of ' + seller + ' than are available for sale.', 'danger');
   } else {
     // complete the sale
     buyerEntity.buyShares(seller, shares, sellerCompany.valuation);
     if(buyerIsCompany){
-      // destroy the orphaned stocks
-      // TODO process the orphaned stock transaction
-      var matchingOrphans = _.where(orphanedStocks, {companyName: buyerEntity.companyName});
-      console.dir(matchingOrphans);
-      for(var i = shares; shares > 0; i--){
-
-      }
+      // destroy the orphaned stocks in private method
     } else {
-      sellerCompany.sharesOwned -= shares;
-      sellerCompany.cash += saleValue;
+      // if buying orphaned stock, update orphaned count. else update company shares and cash
+      if(buyingOrphans){
+        sellerCompany.sharesOrphaned -= shares;
+      } else {
+        sellerCompany.sharesOwned -= shares;
+        sellerCompany.cash += saleValue;
+      }
       updatePlayerView();
     }
     updateCompanyView();
@@ -161,8 +160,8 @@ function tryBuyTransaction(buyer, seller, shares, buyingOrphans){
 }
 
 function trySellTransaction(seller, company, shares){
-  console.dir(orphanedStocks);
   var sellerEntity = getPlayerByName(seller);
+  var companyEntity = getCompanyByName(company);
   var shareValue = getValuationForCompany(company);
   var availableShares = _.filter(sellerEntity.shares, function(share){
     return share.companyName == company;
@@ -171,7 +170,6 @@ function trySellTransaction(seller, company, shares){
     logEvent('Cannot sell more shares of ' + company + ' than the player owns.', 'danger');
     return;
   }
-  // TODO: make sure we pop the correct shares
   for(var i = 0; i < shares; i++){
     var getShare = availableShares[i];
     sellerEntity.cash += shareValue;
@@ -179,7 +177,8 @@ function trySellTransaction(seller, company, shares){
       return share.companyName == company;
     });
     sellerEntity.shares.splice(shareIndex, 1);
-    orphanedStocks.push(getShare);
+    companyEntity.sharesOrphaned++;
+    console.log(companyEntity);
   }
 
   updatePlayerView();
@@ -289,17 +288,6 @@ function getPlayerByName(name){
   return _.findWhere(players, {playerName: name});
 }
 
-// returns number of orphaned stocks available for a given company
-function availableOrphanedStocksForCompany(companyName){
-  var groupedStocks = _.groupBy(orphanedStocks, function(stock){
-    return stock.companyName;
-  })
-  if(groupedStocks[companyName]){
-    return groupedStocks[companyName].length;
-  } else {
-    return 0;
-  }
-}
 
 /////////////////////////////////
 
@@ -343,6 +331,7 @@ function addCompanyToView(company){
   companyHTML += '<td>$' + company.netProfit + '</td>';
   companyHTML += '<td>$' + company.valuation + '</td>';
   companyHTML += '<td>' + company.sharesOwned + '</td>';
+  companyHTML += '<td>' + company.sharesOrphaned + '</td>';
   companyHTML += '</tr>';
   $('.company-table').append(companyHTML);
 }
@@ -398,21 +387,16 @@ function updateDropdowns(){
   $('#buyerSelect').append('<option role="separator" disabled="disabled"></option>');
   $('#adjustSelect').append('<option role="separator" disabled="disabled"></option>');
   _.each(companies, function(company){
+    console.log(company);
     $('#buyCompanySelect').append('<option>' + company.companyName + '</option>');
     $('#buyerSelect').append('<option>' + company.companyName + '</option>');
     $('#adjustSelect').append('<option>' + company.companyName + '</option>');
     $('#sellCompanySelect').append('<option>' + company.companyName + '</option>');
     $('#dividendSelect').append('<option>' + company.companyName + '</option>');
+    if(company.sharesOrphaned > 0){
+      $('#buyCompanySelect').append('<option>(orphaned) ' + company.companyName + '</option>');
+    }
   });
-  if(orphanedStocks.length > 0){
-    $('#buyCompanySelect').append('<option role="separator" disabled="disabled"></option>');
-    _.each(companies, function(company){
-      var orphans = availableOrphanedStocksForCompany(company.companyName);
-      if(orphans > 0){
-        $('#buyCompanySelect').append('<option>(orphaned) ' + company.companyName + '</option>');
-      }
-    });
-  }
 }
 
 function updateBuySharesInfo(companyName, _numberOfShares) {
@@ -533,7 +517,7 @@ $(document).ready(function() {
     e.preventDefault();
     // send the buyer, seller, share count, and a flag indicating whether the stocks being purchased are orphaned
     var buyCompany =  $('#buyCompanySelect').val().replace('(orphaned) ', '');
-    tryBuyTransaction($('#buyerSelect').val(), buyCompany, $('#buySharesNumber').val(), ($('#buyCompanySelect').val().indexOf('orphaned') > 1));
+    tryBuyTransaction($('#buyerSelect').val(), buyCompany, $('#buySharesNumber').val(), ($('#buyCompanySelect').val().indexOf('orphaned') > -1));
   });
 
   $('#sellButton').on('click', function(e){
